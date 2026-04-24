@@ -6,7 +6,7 @@ app.use(cors());
 app.use(express.json());
 
 const MY_ID = "jayeshmehra_03042005";
-const MY_EMAIL = "jayeshmehra345@gmail.com";
+const MY_EMAIL = "jm9927@srmist.edu.in";
 const MY_ROLL = "RA2311003011102";
 
 

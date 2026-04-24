@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Node Tree Checker</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: #f0ede8;
+      color: #1c1c1c;
+      min-height: 100vh;
+      padding: 32px 16px 80px;
+    }
+
+    .container {
+      max-width: 720px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      font-size: 1.6rem;
+      font-weight: 600;
+      margin-bottom: 4px;
+      letter-spacing: -0.02em;
+    }
+
+    .subtitle {
+      font-size: 0.85rem;
+      color: #888;
+      margin-bottom: 28px;
+      font-family: 'DM Mono', monospace;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 10px;
+      padding: 20px;
+      margin-bottom: 16px;
+      border: 1px solid #e0ddd8;
+    }
+
+    label {
+      display: block;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: #555;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    textarea {
+      width: 100%;
+      height: 110px;
+      border: 1.5px solid #ddd;
+      border-radius: 7px;
+      padding: 12px;
+      font-family: 'DM Mono', monospace;
+      font-size: 13px;
+      line-height: 1.7;
+      resize: vertical;
+      outline: none;
+      background: #fafaf9;
+      color: #1c1c1c;
+      transition: border-color 0.2s;
+    }
+
+    textarea:focus { border-color: #1c1c1c; }
+    textarea::placeholder { color: #bbb; }
+
+    .hint {
+      font-size: 0.78rem;
+      color: #aaa;
+      margin-top: 6px;
+      font-family: 'DM Mono', monospace;
+    }
+
+    .btns {
+      display: flex;
+      gap: 8px;
+      margin-top: 14px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.88rem;
+      font-weight: 600;
+      padding: 9px 20px;
+      border-radius: 7px;
+      cursor: pointer;
+      border: 1.5px solid transparent;
+      transition: opacity 0.15s, background 0.15s;
+    }
+
+    .btn-main {
+      background: #1c1c1c;
+      color: #fff;
+      border-color: #1c1c1c;
+    }
+    .btn-main:hover { opacity: 0.85; }
+    .btn-main:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    .btn-sec {
+      background: transparent;
+      color: #888;
+      border-color: #ddd;
+    }
+    .btn-sec:hover { border-color: #aaa; color: #555; }
+
+    .error-box {
+      background: #fff4f4;
+      border: 1px solid #f5c6c6;
+      border-radius: 8px;
+      padding: 12px 16px;
+      font-size: 0.85rem;
+      color: #c0392b;
+      margin-bottom: 16px;
+      font-family: 'DM Mono', monospace;
+    }
+
+    /* summary stats */
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .stat-box {
+      background: #fff;
+      border: 1px solid #e0ddd8;
+      border-radius: 10px;
+      padding: 16px;
+      text-align: center;
+    }
+
+    .stat-num {
+      font-size: 2rem;
+      font-weight: 600;
+      font-family: 'DM Mono', monospace;
+      line-height: 1;
+      margin-bottom: 4px;
+    }
+
+    .stat-num.green { color: #2e7d52; }
+    .stat-num.red   { color: #c0392b; }
+    .stat-num.blue  { color: #1a5fa8; }
+
+    .stat-label {
+      font-size: 0.75rem;
+      color: #999;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    /* identity */
+    .id-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+
+    .id-chip {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.78rem;
+      background: #f5f4f0;
+      border: 1px solid #e0ddd8;
+      border-radius: 5px;
+      padding: 4px 10px;
+      color: #555;
+    }
+
+    .id-chip b { color: #999; font-weight: 400; margin-right: 4px; }
+
+    /* section label */
+    .sec-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: #aaa;
+      margin-bottom: 10px;
+      margin-top: 4px;
+    }
+
+    /* tree cards */
+    .tree-card {
+      background: #fff;
+      border: 1px solid #e0ddd8;
+      border-radius: 10px;
+      margin-bottom: 10px;
+      overflow: hidden;
+    }
+
+    .tree-card.is-cycle {
+      border-color: #f5c6c6;
+      background: #fffafa;
+    }
+
+    .tree-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      border-bottom: 1px solid #f0ede8;
+      background: #fafaf9;
+    }
+
+    .tree-card.is-cycle .tree-head {
+      background: #fff8f8;
+      border-bottom-color: #f5c6c6;
+    }
+
+    .root-label {
+      font-weight: 600;
+      font-size: 0.95rem;
+    }
+
+    .badge {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.72rem;
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-weight: 500;
+    }
+
+    .badge-tree { background: #e8f5ee; color: #2e7d52; border: 1px solid #b8ddc8; }
+    .badge-cycle { background: #fff0f0; color: #c0392b; border: 1px solid #f5c6c6; }
+    .badge-depth { background: #eaf1fb; color: #1a5fa8; border: 1px solid #b8cfe0; margin-right: 6px; }
+
+    .tree-body {
+      padding: 14px 16px;
+      font-family: 'DM Mono', monospace;
+      font-size: 12.5px;
+      line-height: 2;
+      white-space: pre;
+      overflow-x: auto;
+    }
+
+    .node-span {
+      display: inline-block;
+      background: #eaf1fb;
+      border: 1px solid #b8cfe0;
+      color: #1a5fa8;
+      border-radius: 3px;
+      padding: 0 5px;
+      font-weight: 500;
+    }
+
+    .cycle-msg {
+      color: #bbb;
+      font-size: 12px;
+      font-style: italic;
+    }
+
+    /* tags for invalid/dupes */
+    .tag-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+      margin-bottom: 16px;
+    }
+
+    .tag {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.78rem;
+      padding: 4px 10px;
+      border-radius: 5px;
+    }
+
+    .tag-inv { background: #fff0f0; color: #c0392b; border: 1px solid #f5c6c6; }
+    .tag-dup { background: #fffbea; color: #a07820; border: 1px solid #e8d898; }
+
+    /* raw json */
+    .raw-toggle {
+      font-size: 0.8rem;
+      color: #aaa;
+      cursor: pointer;
+      user-select: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 6px 0;
+      background: none;
+      border: none;
+      font-family: 'DM Mono', monospace;
+    }
+
+    .raw-toggle:hover { color: #555; }
+
+    pre.raw-json {
+      background: #fafaf9;
+      border: 1px solid #e0ddd8;
+      border-radius: 7px;
+      padding: 14px;
+      font-family: 'DM Mono', monospace;
+      font-size: 11.5px;
+      line-height: 1.7;
+      color: #666;
+      overflow-x: auto;
+      margin-top: 8px;
+      display: none;
+    }
+
+    pre.raw-json.open { display: block; }
+
+    .spinner {
+      display: inline-block;
+      width: 12px; height: 12px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+      vertical-align: middle;
+      margin-right: 5px;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    @media (max-width: 500px) {
+      .stats { grid-template-columns: repeat(2, 1fr); }
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <h1>Node Tree Checker</h1>
+  <p class="subtitle">POST /bfhl · enter edges, see the tree</p>
+
+  <div class="card">
+    <label>Node Edges</label>
+    <textarea id="inp" placeholder="A->B, A->C, B->D, X->Y, Y->Z, Z->X, hello"></textarea>
+    <p class="hint">comma or newline separated &nbsp;·&nbsp; format: A->B (single uppercase letters only)</p>
+    <div class="btns">
+      <button class="btn-main" id="submitBtn" onclick="submit()">Check</button>
+      <button class="btn-sec" onclick="loadExample()">Load Example</button>
+      <button class="btn-sec" onclick="clearAll()">Clear</button>
+    </div>
+  </div>
+
+  <div id="out"></div>
+
+</div>
+
+<script>
+const API = "https://bajaj-yrsb.onrender.com/bfhl";
+
+const EXAMPLE = `A->B, A->C, B->D, C->E, E->F,
+X->Y, Y->Z, Z->X,
+P->Q, Q->R,
+G->H, G->H, G->I,
+hello, 1->2, A->`;
+
+function loadExample() {
+  document.getElementById('inp').value = EXAMPLE;
+}
+
+function clearAll() {
+  document.getElementById('inp').value = '';
+  document.getElementById('out').innerHTML = '';
+}
+
+async function submit() {
+  const raw = document.getElementById('inp').value.trim();
+  if (!raw) return;
+
+  const data = raw.split(/[\n,]+/).map(s => s.trim()).filter(Boolean);
+
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>Checking...';
+  document.getElementById('out').innerHTML = '';
+
+  try {
+    const res = await fetch(API, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ data })
+    });
+
+    if (!res.ok) throw new Error('Server error: ' + res.status);
+    const json = await res.json();
+    renderResult(json);
+  } catch (err) {
+    document.getElementById('out').innerHTML =
+      '<div class="error-box">⚠ ' + err.message + '</div>';
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = 'Check';
+  }
+}
+
+function renderResult(d) {
+  const { user_id, email_id, college_roll_number, hierarchies, invalid_entries, duplicate_edges, summary } = d;
+  let html = '';
+
+  // stats
+  html += `
+    <div class="stats">
+      <div class="stat-box"><div class="stat-num green">${summary.total_trees}</div><div class="stat-label">Trees</div></div>
+      <div class="stat-box"><div class="stat-num red">${summary.total_cycles}</div><div class="stat-label">Cycles</div></div>
+      <div class="stat-box"><div class="stat-num blue">${summary.largest_tree_root || '—'}</div><div class="stat-label">Deepest Root</div></div>
+    </div>`;
+
+  // identity
+  html += `<div class="id-row">
+    <span class="id-chip"><b>id</b>${esc(user_id)}</span>
+    <span class="id-chip"><b>email</b>${esc(email_id)}</span>
+    <span class="id-chip"><b>roll</b>${esc(college_roll_number)}</span>
+  </div>`;
+
+  // hierarchies
+  html += `<div class="sec-label">Hierarchies (${hierarchies.length})</div>`;
+  for (const h of hierarchies) {
+    const cycle = !!h.has_cycle;
+    html += `<div class="tree-card ${cycle ? 'is-cycle' : ''}">
+      <div class="tree-head">
+        <span class="root-label">Root: ${esc(h.root)}</span>
+        <span>
+          ${!cycle ? `<span class="badge badge-depth">depth ${h.depth}</span>` : ''}
+          <span class="badge ${cycle ? 'badge-cycle' : 'badge-tree'}">${cycle ? 'cycle' : 'tree'}</span>
+        </span>
+      </div>
+      <div class="tree-body">${cycle ? '<span class="cycle-msg">cycle detected — no tree</span>' : buildAscii(h.tree, h.root)}</div>
+    </div>`;
+  }
+
+  // invalid
+  if (invalid_entries && invalid_entries.length) {
+    html += `<div class="sec-label">Invalid (${invalid_entries.length})</div><div class="tag-row">`;
+    invalid_entries.forEach(e => html += `<span class="tag tag-inv">${esc(e) || '(empty)'}</span>`);
+    html += '</div>';
+  }
+
+  // dupes
+  if (duplicate_edges && duplicate_edges.length) {
+    html += `<div class="sec-label">Duplicates (${duplicate_edges.length})</div><div class="tag-row">`;
+    duplicate_edges.forEach(e => html += `<span class="tag tag-dup">${esc(e)}</span>`);
+    html += '</div>';
+  }
+
+  // raw json
+  html += `
+    <button class="raw-toggle" onclick="toggleRaw(this)">▶ raw json</button>
+    <pre class="raw-json">${esc(JSON.stringify(d, null, 2))}</pre>`;
+
+  document.getElementById('out').innerHTML = html;
+}
+
+function toggleRaw(btn) {
+  const pre = btn.nextElementSibling;
+  pre.classList.toggle('open');
+  btn.textContent = pre.classList.contains('open') ? '▼ raw json' : '▶ raw json';
+}
+
+function buildAscii(obj, root) {
+  function lines(node, children, prefix, isLast) {
+    const conn = isLast ? '└── ' : '├── ';
+    const rows = [prefix + conn + `<span class="node-span">${node}</span>`];
+    const keys = Object.keys(children);
+    keys.forEach((k, i) =>
+      rows.push(...lines(k, children[k], prefix + (isLast ? '    ' : '│   '), i === keys.length - 1))
+    );
+    return rows;
+  }
+
+  const children = obj[root] || {};
+  const keys = Object.keys(children);
+  const all = [
+    `<span class="node-span">${root}</span>`,
+    ...keys.flatMap((k, i) => lines(k, children[k], '', i === keys.length - 1))
+  ];
+  return all.join('\n');
+}
+
+function esc(s) {
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
+document.addEventListener('keydown', e => {
+  if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') submit();
+});
+</script>
+</body>
+</html>
